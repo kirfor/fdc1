@@ -18,7 +18,7 @@ document.getElementById('textForm').addEventListener('submit', function(e) {
             return { valid: false, message: 'Допустимы только цифры, пробелы и запятые!' };
         }
         
-        // Получаем все числа (игнорируя пробелы)
+        // Получаем все числа
         const numbers = value.match(/\d+/g) || [];
         
         // Проверка на наличие чисел
@@ -26,15 +26,16 @@ document.getElementById('textForm').addEventListener('submit', function(e) {
             return { valid: false, message: 'Введите хотя бы одно число!' };
         }
         
-        // Если чисел больше одного - проверяем наличие запятых между ними
+        // Если чисел больше одного - проверяем разделители
         if (numbers.length > 1) {
-            // Удаляем все пробелы для проверки запятых
-            const withoutSpaces = value.replace(/\s/g, '');
+            // Создаем регулярное выражение для проверки разделителей между числами
+            const separatorRegex = new RegExp(
+                numbers.map(num => `${num}\\s*[,]+\\s*`).join('|').slice(0, -8) + 
+                `${numbers[numbers.length-1]}$`
+            );
             
-            // Проверяем, что между числами есть хотя бы одна запятая
-            const numbersWithCommas = withoutSpaces.match(/\d+,+\d+/g);
-            if (!numbersWithCommas || numbersWithCommas.length < numbers.length - 1) {
-                return { valid: false, message: 'Между числами должна быть хотя бы одна запятая!' };
+            if (!separatorRegex.test(value)) {
+                return { valid: false, message: 'Между числами должны быть запятые!' };
             }
         }
         
