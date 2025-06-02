@@ -11,62 +11,55 @@ document.getElementById('textForm').addEventListener('submit', function(e) {
     errorMessage.style.display = 'none';
     errorMessage.textContent = '';
     
-    // Функция нормализации ввода (удаление пробелов)
-    const normalizeInput = (value) => {
-        return value
-            .replace(/\s*,\s*/g, ',')  // Удаляем пробелы вокруг запятых
-            .replace(/^\s+|\s+$/g, ''); // Удаляем пробелы в начале и конце
-    };
-    
-    const normValue1 = normalizeInput(input1.value);
-    const normValue2 = normalizeInput(input2.value);
-    
-    // Проверка на пустые поля после нормализации
-    if (!normValue1 || !normValue2) {
-        if (!normValue1) input1.classList.add('error');
-        if (!normValue2) input2.classList.add('error');
-        errorMessage.textContent = 'Оба поля должны содержать числа!';
-        errorMessage.style.display = 'block';
-        return;
-    }
-    
-    // Функция проверки последовательности чисел
-    const validateNumberSequence = (value, inputElement) => {
-        // Проверка формата (только цифры, запятые и пробелы, которые уже обработаны)
-        if (!/^[\d,]+$/.test(value)) {
-            return { valid: false, message: 'Допустимы только цифры и запятые!' };
+    // Функция проверки последовательности
+    const validateSequence = (value) => {
+        // Проверка на нечисловые символы (кроме пробелов и запятых)
+        if (/[^\d\s,]/.test(value)) {
+            return { valid: false, message: 'Допустимы только цифры, пробелы и запятые!' };
         }
         
-        // Проверка на запятые в начале/конце или подряд
-        if (/^,|,$|,,/.test(value)) {
-            return { valid: false, message: 'Неправильное использование запятых!' };
+        // Удаляем лишние пробелы и нормализуем запятые
+        const normalized = value
+            .replace(/\s+/g, ' ') // Заменяем множественные пробелы на один
+            .replace(/,+/g, ',')  // Заменяем множественные запятые на одну
+            .trim();
+        
+        // Проверка на наличие хотя бы одной запятой между числами
+        if (!/,/.test(normalized.replace(/^[,\s]+|[,\s]+$/g, ''))) {
+            return { valid: false, message: 'Между числами должна быть хотя бы одна запятая!' };
         }
         
-        // Разбиваем на числа
-        const numbers = value.split(',');
+        // Извлекаем все числа
+        const numbers = normalized.match(/\d+/g) || [];
+        
+        // Проверка на наличие чисел
+        if (numbers.length === 0) {
+            return { valid: false, message: 'Введите хотя бы одно число!' };
+        }
         
         // Проверка каждого числа
-        for (let numStr of numbers) {
+        for (const numStr of numbers) {
             const num = parseInt(numStr, 10);
-            
             if (num < 1 || num > 254) {
                 return { valid: false, message: 'Числа должны быть от 1 до 254!' };
             }
         }
         
-        return { valid: true };
+        return { valid: true, numbers: numbers };
     };
     
     // Проверка обоих полей
-    const validation1 = validateNumberSequence(normValue1, input1);
-    const validation2 = validateNumberSequence(normValue2, input2);
+    const validation1 = validateSequence(input1.value);
+    const validation2 = validateSequence(input2.value);
     
-    if (!validation1.valid || !validation2.valid) {
-        let errorText = '';
-        if (!validation1.valid) errorText += `Поле 1: ${validation1.message} `;
-        if (!validation2.valid) errorText += `Поле 2: ${validation2.message}`;
-        
-        errorMessage.textContent = errorText.trim();
+    // Собираем ошибки
+    const errors = [];
+    if (!validation1.valid) errors.push(`Поле 1: ${validation1.message}`);
+    if (!validation2.valid) errors.push(`Поле 2: ${validation2.message}`);
+    
+    // Показываем ошибки
+    if (errors.length > 0) {
+        errorMessage.textContent = errors.join(' ');
         errorMessage.style.display = 'block';
         
         if (!validation1.valid) input1.classList.add('error');
@@ -75,21 +68,5 @@ document.getElementById('textForm').addEventListener('submit', function(e) {
     }
     
     // Если все проверки пройдены
-    alert(`Проверка успешна!\nПоле 1: ${normValue1}\nПоле 2: ${normValue2}`);
-});
-
-// Автоматическая очистка пробелов при вводе
-[document.getElementById('input1'), document.getElementById('input2')].forEach(input => {
-    input.addEventListener('input', function() {
-        // Сохраняем позицию курсора
-        const cursorPos = this.selectionStart;
-        
-        // Удаляем пробелы вокруг запятых
-        this.value = this.value
-            .replace(/\s*,\s*/g, ',')
-            .replace(/^\s+/, '');
-            
-        // Восстанавливаем позицию курсора
-        this.setSelectionRange(cursorPos, cursorPos);
-    });
+    alert(`Проверка успешна!\nПоле 1: ${validation1.numbers.join(', ')}\nПоле 2: ${validation2.numbers.join(', ')}`);
 });
