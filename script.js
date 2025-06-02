@@ -18,23 +18,24 @@ document.getElementById('textForm').addEventListener('submit', function(e) {
             return { valid: false, message: 'Допустимы только цифры, пробелы и запятые!' };
         }
         
-        // Нормализуем строку (удаляем все пробелы)
-        const cleanValue = value.replace(/\s/g, '');
-        
         // Проверка на наличие хотя бы одного числа
-        if (!/\d/.test(cleanValue)) {
+        if (!/\d/.test(value.replace(/[\s,]/g, ''))) {
             return { valid: false, message: 'Введите хотя бы одно число!' };
         }
         
-        // Извлекаем все числа (игнорируем пустые элементы между запятыми)
-        const numbers = cleanValue.split(',').filter(num => num !== '');
+        // Проверка, что между числами есть хотя бы одна запятая
+        // (если между цифрами есть пробелы, должна быть запятая)
+        if (/(?<=\d)\s+(?=\d)/.test(value) && !/(?<=\d)[\s,]*,(?=\d)/.test(value)) {
+            return { valid: false, message: 'Между числами с пробелами должна быть запятая!' };
+        }
+        
+        // Извлекаем все числа (игнорируя пробелы и лишние запятые)
+        const numbers = value.split(/[\s,]+/)
+            .filter(num => num !== '' && !isNaN(parseInt(num, 10)))
+            .map(num => parseInt(num, 10));
         
         // Проверка каждого числа
-        for (const numStr of numbers) {
-            const num = parseInt(numStr, 10);
-            if (isNaN(num)) {
-                return { valid: false, message: 'Допустимы только целые числа!' };
-            }
+        for (const num of numbers) {
             if (num < 1 || num > 254) {
                 return { valid: false, message: 'Числа должны быть от 1 до 254!' };
             }
