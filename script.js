@@ -18,24 +18,29 @@ document.getElementById('textForm').addEventListener('submit', function(e) {
             return { valid: false, message: 'Допустимы только цифры, пробелы и запятые!' };
         }
         
-        // Проверка на наличие хотя бы одного числа
-        if (!/\d/.test(value.replace(/[\s,]/g, ''))) {
+        // Получаем все числа (игнорируя пробелы)
+        const numbers = value.match(/\d+/g) || [];
+        
+        // Проверка на наличие чисел
+        if (numbers.length === 0) {
             return { valid: false, message: 'Введите хотя бы одно число!' };
         }
         
-        // Проверка, что между числами есть хотя бы одна запятая
-        // (если между цифрами есть пробелы, должна быть запятая)
-        if (/(?<=\d)\s+(?=\d)/.test(value) && !/(?<=\d)[\s,]*,(?=\d)/.test(value)) {
-            return { valid: false, message: 'Между числами с пробелами должна быть запятая!' };
+        // Если чисел больше одного - проверяем наличие запятых между ними
+        if (numbers.length > 1) {
+            // Удаляем все пробелы для проверки запятых
+            const withoutSpaces = value.replace(/\s/g, '');
+            
+            // Проверяем, что между числами есть хотя бы одна запятая
+            const numbersWithCommas = withoutSpaces.match(/\d+,+\d+/g);
+            if (!numbersWithCommas || numbersWithCommas.length < numbers.length - 1) {
+                return { valid: false, message: 'Между числами должна быть хотя бы одна запятая!' };
+            }
         }
         
-        // Извлекаем все числа (игнорируя пробелы и лишние запятые)
-        const numbers = value.split(/[\s,]+/)
-            .filter(num => num !== '' && !isNaN(parseInt(num, 10)))
-            .map(num => parseInt(num, 10));
-        
         // Проверка каждого числа
-        for (const num of numbers) {
+        for (const numStr of numbers) {
+            const num = parseInt(numStr, 10);
             if (num < 1 || num > 254) {
                 return { valid: false, message: 'Числа должны быть от 1 до 254!' };
             }
