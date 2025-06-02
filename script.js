@@ -18,28 +18,23 @@ document.getElementById('textForm').addEventListener('submit', function(e) {
             return { valid: false, message: 'Допустимы только цифры, пробелы и запятые!' };
         }
         
-        // Удаляем лишние пробелы и нормализуем запятые
-        const normalized = value
-            .replace(/\s+/g, ' ') // Заменяем множественные пробелы на один
-            .replace(/,+/g, ',')  // Заменяем множественные запятые на одну
-            .trim();
+        // Нормализуем строку (удаляем все пробелы)
+        const cleanValue = value.replace(/\s/g, '');
         
-        // Проверка на наличие хотя бы одной запятой между числами
-        if (!/,/.test(normalized.replace(/^[,\s]+|[,\s]+$/g, ''))) {
-            return { valid: false, message: 'Между числами должна быть хотя бы одна запятая!' };
-        }
-        
-        // Извлекаем все числа
-        const numbers = normalized.match(/\d+/g) || [];
-        
-        // Проверка на наличие чисел
-        if (numbers.length === 0) {
+        // Проверка на наличие хотя бы одного числа
+        if (!/\d/.test(cleanValue)) {
             return { valid: false, message: 'Введите хотя бы одно число!' };
         }
+        
+        // Извлекаем все числа (игнорируем пустые элементы между запятыми)
+        const numbers = cleanValue.split(',').filter(num => num !== '');
         
         // Проверка каждого числа
         for (const numStr of numbers) {
             const num = parseInt(numStr, 10);
+            if (isNaN(num)) {
+                return { valid: false, message: 'Допустимы только целые числа!' };
+            }
             if (num < 1 || num > 254) {
                 return { valid: false, message: 'Числа должны быть от 1 до 254!' };
             }
