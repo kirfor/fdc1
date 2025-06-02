@@ -18,27 +18,28 @@ document.getElementById('textForm').addEventListener('submit', function(e) {
             return { valid: false, message: 'Допустимы только цифры, пробелы и запятые!' };
         }
         
-        // Нормализованная версия (без пробелов)
-        const cleanValue = value.replace(/\s/g, '');
+        // Получаем все числа
+        const numbers = value.match(/\d+/g) || [];
         
-        // Проверка на наличие хотя бы одного числа
-        if (!/\d/.test(cleanValue)) {
+        // Проверка на наличие чисел
+        if (numbers.length === 0) {
             return { valid: false, message: 'Введите хотя бы одно число!' };
         }
         
-        // Проверка, что между числами есть хотя бы одна запятая
-        // (учитываем, что после удаления пробелов между цифрами должна быть запятая)
-        if (/(?<=\d)\d/.test(cleanValue)) {
-            return { valid: false, message: 'Между числами должна быть хотя бы одна запятая!' };
+        // Если чисел несколько - проверяем разделители
+        if (numbers.length > 1) {
+            // Создаем шаблон для проверки разделителей
+            const pattern = numbers.join('\\s*[,]+\\s*') + '$';
+            const regex = new RegExp(pattern);
+            
+            if (!regex.test(value)) {
+                return { valid: false, message: 'Между числами должна быть хотя бы одна запятая!' };
+            }
         }
         
-        // Извлекаем все числа
-        const numbers = cleanValue.split(',')
-            .filter(num => num !== '')
-            .map(num => parseInt(num, 10));
-        
         // Проверка каждого числа
-        for (const num of numbers) {
+        for (const numStr of numbers) {
+            const num = parseInt(numStr, 10);
             if (num < 1 || num > 254) {
                 return { valid: false, message: 'Числа должны быть от 1 до 254!' };
             }
